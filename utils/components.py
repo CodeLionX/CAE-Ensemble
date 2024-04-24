@@ -1,6 +1,4 @@
-import logging
-from statistics import mean, median
-import numpy as np
+from statistics import mean
 import torch
 import torch.nn as nn
 from torch.optim import Adam, lr_scheduler

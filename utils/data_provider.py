@@ -1,15 +1,16 @@
+import ast
 import json
 import os
 import random
 from math import pi
 from pathlib import Path
-import ast
-import torch
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import torch
 from sklearn.preprocessing import MinMaxScaler
-from torch.utils.data import TensorDataset, DataLoader
-import matplotlib.pyplot as plt
+from torch.utils.data import DataLoader, TensorDataset
 
 
 def rolling_window_2D(a, n):
@@ -34,20 +35,28 @@ def cutting_window_2D(a, n):
 
 
 def unroll_window_2D(a):
-    '''
+    """
     :param a: 2D data, matrix of probability scores of rolling windows
     :return: 1D data, final probability score for points
-    '''
+    """
     return np.array([a.diagonal(i).mean() for i in range(-a.shape[0] + 1, a.shape[1])])
 
+
 def unroll_window_3D(a):
-    '''
+    """
     :param a: 3D data, matrix of probability scores of rolling windows (total_length, rolling_size, features)
     :return: 1D data, final probability score for points
-    '''
+    """
     multi_ts = []
     for channel in range(a.shape[2]):
-        uni_ts = np.array([a[:, :, channel].diagonal(i).mean() for i in range(-a[:, :, channel].shape[0] + 1, a[:, :, channel].shape[1])])
+        uni_ts = np.array(
+            [
+                a[:, :, channel].diagonal(i).mean()
+                for i in range(
+                    -a[:, :, channel].shape[0] + 1, a[:, :, channel].shape[1]
+                )
+            ]
+        )
         multi_ts.append(uni_ts)
 
     multi_ts = np.stack(multi_ts, axis=1)
@@ -64,14 +73,14 @@ def generate_synthetic_dataset(case=0, N=200, noise=True, verbose=True):
             plt.figure(figsize=(9, 3))
             ax = plt.axes()
 
-            ax.plot(t, scaler.fit_transform(np.expand_dims(trend, 1)), 'blue', lw=2)
+            ax.plot(t, scaler.fit_transform(np.expand_dims(trend, 1)), "blue", lw=2)
 
             plt.yticks([0, 0.25, 0.5, 0.75, 1])
             ax.set_xlim(-10, 260)
             ax.set_ylim(-0.10, 1.10)
 
-            plt.xlabel('$t$')
-            plt.ylabel('$s$')
+            plt.xlabel("$t$")
+            plt.ylabel("$s$")
             plt.grid(True)
             plt.tight_layout()
 
@@ -153,8 +162,8 @@ def generate_synthetic_dataset(case=0, N=200, noise=True, verbose=True):
         if verbose:
             plt.figure(figsize=(9, 3))
             plt.plot(t, output, lw=2)
-            plt.xlabel('t')
-            plt.ylabel('s')
+            plt.xlabel("t")
+            plt.ylabel("s")
             plt.grid(True)
             plt.tight_layout()
             plt.show()
@@ -172,8 +181,8 @@ def generate_synthetic_dataset(case=0, N=200, noise=True, verbose=True):
         if verbose:
             plt.figure(figsize=(9, 3))
             plt.plot(t, output, lw=2)
-            plt.xlabel('t')
-            plt.ylabel('s')
+            plt.xlabel("t")
+            plt.ylabel("s")
             plt.grid(True)
             plt.tight_layout()
             plt.show()
@@ -188,7 +197,7 @@ def generate_synthetic_dataset(case=0, N=200, noise=True, verbose=True):
         trend_2 = 0 * t_2
         trend_3 = 8 * np.sin(0.2 * t_3)
         if noise:
-            noise_1 = 3 * (np.random.rand(120-0) - 0.5)
+            noise_1 = 3 * (np.random.rand(120 - 0) - 0.5)
             noise_3 = 3 * (np.random.rand(N - 140) - 0.5)
         output = np.concatenate([trend_1 + noise_1, trend_2, trend_3 + noise_3])
         output = np.expand_dims(output, 1)
@@ -197,8 +206,8 @@ def generate_synthetic_dataset(case=0, N=200, noise=True, verbose=True):
         if verbose:
             plt.figure(figsize=(9, 3))
             plt.plot(t, output, lw=2)
-            plt.xlabel('t')
-            plt.ylabel('s')
+            plt.xlabel("t")
+            plt.ylabel("s")
             plt.grid(True)
             plt.tight_layout()
             plt.show()
@@ -219,8 +228,8 @@ def generate_synthetic_dataset(case=0, N=200, noise=True, verbose=True):
         if verbose:
             plt.figure(figsize=(9, 3))
             plt.plot(t, output, lw=2)
-            plt.xlabel('t')
-            plt.ylabel('s')
+            plt.xlabel("t")
+            plt.ylabel("s")
             plt.grid(True)
             plt.tight_layout()
             plt.show()
@@ -229,23 +238,38 @@ def generate_synthetic_dataset(case=0, N=200, noise=True, verbose=True):
     return output.astype(np.float32), np.ones(output.shape)
 
 
-def get_loader(input, label=None, batch_size=128, shuffle=False, from_numpy=False, drop_last=False):
+def get_loader(
+    input, label=None, batch_size=128, shuffle=False, from_numpy=False, drop_last=False
+):
     """Convert input and label Tensors to a DataLoader
 
-        If label is None, use a dummy Tensor
+    If label is None, use a dummy Tensor
     """
     if label is None:
         label = input
     if from_numpy:
         input = torch.from_numpy(input)
         label = torch.from_numpy(label)
-    loader = DataLoader(TensorDataset(input, label), batch_size=batch_size, shuffle=shuffle, drop_last=drop_last)
+    loader = DataLoader(
+        TensorDataset(input, label),
+        batch_size=batch_size,
+        shuffle=shuffle,
+        drop_last=drop_last,
+    )
     return loader
 
 
-def cross_brain_get_loader(input_x, input_y, label=None, batch_size=128, shuffle=False, from_numpy=False, drop_last=False):
+def cross_brain_get_loader(
+    input_x,
+    input_y,
+    label=None,
+    batch_size=128,
+    shuffle=False,
+    from_numpy=False,
+    drop_last=False,
+):
     """Convert input and label Tensors to a DataLoader
-        If label is None, use a dummy Tensor
+    If label is None, use a dummy Tensor
     """
     if label is None:
         label = input_x
@@ -253,7 +277,12 @@ def cross_brain_get_loader(input_x, input_y, label=None, batch_size=128, shuffle
         input_x = torch.from_numpy(input_x)
         input_y = torch.from_numpy(input_y)
         label = torch.from_numpy(label)
-    loader = DataLoader(TensorDataset(input_x, input_y, label), batch_size=batch_size, shuffle=shuffle, drop_last=drop_last)
+    loader = DataLoader(
+        TensorDataset(input_x, input_y, label),
+        batch_size=batch_size,
+        shuffle=shuffle,
+        drop_last=drop_last,
+    )
     return loader
 
 
@@ -263,17 +292,24 @@ def partition_data(ts, label, part_number=10):
     return splitted_data, splitted_label
 
 
-def create_batch_data(X, y=None, cutting_size=128, shuffle=False, from_numpy=False, drop_last=True):
-    '''Convert X and y Tensors to a DataLoader
+def create_batch_data(
+    X, y=None, cutting_size=128, shuffle=False, from_numpy=False, drop_last=True
+):
+    """Convert X and y Tensors to a DataLoader
 
-            If y is None, use a dummy Tensor
-    '''
+    If y is None, use a dummy Tensor
+    """
     if y is None:
         y = X
     if from_numpy:
         X = torch.from_numpy(X)
         y = torch.from_numpy(y)
-    loader = DataLoader(TensorDataset(X, y), batch_size=cutting_size, shuffle=shuffle, drop_last=drop_last)
+    loader = DataLoader(
+        TensorDataset(X, y),
+        batch_size=cutting_size,
+        shuffle=shuffle,
+        drop_last=drop_last,
+    )
     b_X = []
     b_Y = []
     for i, (batch_X, batch_y) in enumerate(loader):
@@ -285,18 +321,18 @@ def create_batch_data(X, y=None, cutting_size=128, shuffle=False, from_numpy=Fal
     return b_X, b_Y
 
 
-def read_S5_dataset(file_name, normalize=True, include_slope = False, slope = 0.01):
+def read_S5_dataset(file_name, normalize=True, include_slope=False, slope=0.01):
     abnormal = pd.read_csv(file_name, header=0, index_col=None)
-    abnormal_data = abnormal['value'].values.astype(dtype='float32')
-    abnormal_label = abnormal['is_anomaly'].values
+    abnormal_data = abnormal["value"].values.astype(dtype="float32")
+    abnormal_label = abnormal["is_anomaly"].values
     # Normal = 0, Abnormal = 1 => # Normal = 1, Abnormal = -1
 
     abnormal_data = pd.DataFrame(data=abnormal_data, index=None, columns=None)
-    
+
     if include_slope:
         abnormal_data = abnormal_data.apply(lambda row: row + row.name * slope, axis=1)
-    
-    #abnormal_data = np.expand_dims(abnormal_data, axis=1)
+
+    # abnormal_data = np.expand_dims(abnormal_data, axis=1)
     abnormal_label = np.expand_dims(abnormal_label, axis=1)
 
     if normalize == True:
@@ -309,19 +345,19 @@ def read_S5_dataset(file_name, normalize=True, include_slope = False, slope = 0.
 
 
 def read_NAB_dataset(file_name, normalize=True):
-    with open('./data/NAB/labels/combined_windows.json') as data_file:
+    with open("./data/NAB/labels/combined_windows.json") as data_file:
         json_label = json.load(data_file)
     abnormal = pd.read_csv(file_name, header=0, index_col=0)
-    abnormal['label'] = 1
+    abnormal["label"] = 1
     list_windows = json_label.get(os.path.basename(file_name))
     for window in list_windows:
         start = window[0]
         end = window[1]
-        abnormal.loc[start:end, 'label'] = -1
+        abnormal.loc[start:end, "label"] = -1
 
-    abnormal_data = abnormal['value'].values.astype(dtype='float32')
+    abnormal_data = abnormal["value"].values.astype(dtype="float32")
     # abnormal_preprocessing_data = np.reshape(abnormal_preprocessing_data, (abnormal_preprocessing_data.shape[0], 1))
-    abnormal_label = abnormal['label'].values
+    abnormal_label = abnormal["label"].values
 
     abnormal_data = np.expand_dims(abnormal_data, axis=1)
     abnormal_label = np.expand_dims(abnormal_label, axis=1)
@@ -341,7 +377,7 @@ def read_UAH_dataset(file_folder, normalize=True):
             if i == 0:
                 b[i] = a[i]
             else:
-                b[i] = (a[i] - a[i - 1])
+                b[i] = a[i] - a[i - 1]
                 if b[i] >= 180:
                     b[i] = 360 - b[i]
                 elif -180 < b[i] < 180:
@@ -356,17 +392,26 @@ def read_UAH_dataset(file_folder, normalize=True):
             if i == 0:
                 b[i] = 0
             else:
-                b[i] = (a[i] - a[i - 1])
+                b[i] = a[i] - a[i - 1]
         return b
 
     def read_raw_GPS_dataset(folder_name):
-        dataset = np.loadtxt(fname=folder_name + '/' + os.path.basename(folder_name) + '_RAW_GPS.txt', delimiter=' ',
-                             usecols=(1, 7))
+        dataset = np.loadtxt(
+            fname=folder_name + "/" + os.path.basename(folder_name) + "_RAW_GPS.txt",
+            delimiter=" ",
+            usecols=(1, 7),
+        )
         return dataset
 
     def read_timestamp_and_label_of_semantic_dataset(folder_name):
-        dataset = np.loadtxt(fname=folder_name + '/' + os.path.basename(folder_name) + '_SEMANTIC_ONLINE.txt',
-                             delimiter=' ', usecols=(0, 23, 24, 25))
+        dataset = np.loadtxt(
+            fname=folder_name
+            + "/"
+            + os.path.basename(folder_name)
+            + "_SEMANTIC_ONLINE.txt",
+            delimiter=" ",
+            usecols=(0, 23, 24, 25),
+        )
         return dataset
 
     def preprocess_raw_data(raw_data):
@@ -391,9 +436,12 @@ def read_UAH_dataset(file_folder, normalize=True):
     def compute_label_for_semantic(semantic_online_data):
         label = np.zeros(semantic_online_data.shape[0])
         for i in range(semantic_online_data.shape[0]):
-            if semantic_online_data[i][0] <= semantic_online_data[i][1] or semantic_online_data[i][0] <= \
-                    semantic_online_data[i][2] or semantic_online_data[i][0] <= semantic_online_data[i][1] + \
-                    semantic_online_data[i][2]:
+            if (
+                semantic_online_data[i][0] <= semantic_online_data[i][1]
+                or semantic_online_data[i][0] <= semantic_online_data[i][2]
+                or semantic_online_data[i][0]
+                <= semantic_online_data[i][1] + semantic_online_data[i][2]
+            ):
                 label[i] = -1
             else:
                 label[i] = 1
@@ -415,10 +463,21 @@ def read_UAH_dataset(file_folder, normalize=True):
 def read_2D_dataset(file_name, normalize=True):
     file_name_wo_path = Path(file_name).name
     parent_path = Path(file_name).parent.parent
-    train_frame = pd.read_csv(str(parent_path) + '/train/' + file_name_wo_path, header=None, index_col=None, sep=' ')
-    test_frame = pd.read_csv(str(parent_path) + '/test/' + file_name_wo_path, skiprows=1, header=None, index_col=None, sep=' ')
-    train_data = train_frame.iloc[:, [0, 1]].values.astype(dtype='float32')
-    test_data = test_frame.iloc[:, [0, 1]].values.astype(dtype='float32')
+    train_frame = pd.read_csv(
+        str(parent_path) + "/train/" + file_name_wo_path,
+        header=None,
+        index_col=None,
+        sep=" ",
+    )
+    test_frame = pd.read_csv(
+        str(parent_path) + "/test/" + file_name_wo_path,
+        skiprows=1,
+        header=None,
+        index_col=None,
+        sep=" ",
+    )
+    train_data = train_frame.iloc[:, [0, 1]].values.astype(dtype="float32")
+    test_data = test_frame.iloc[:, [0, 1]].values.astype(dtype="float32")
     test_label = test_frame.iloc[:, 2].values
     # Normal = 0, Abnormal = 1 => # Normal = 1, Abnormal = -1
 
@@ -435,13 +494,13 @@ def read_2D_dataset(file_name, normalize=True):
     return train_data, test_data, test_label
 
 
-def read_ECG_dataset(file_name, normalize=True, include_slope = False, slope = 0.01):
-    abnormal = pd.read_csv(file_name, header=None, index_col=None, skiprows=0, sep=',')
-    abnormal_data = abnormal.iloc[:, [1, 2]].values.astype(dtype='float32')
+def read_ECG_dataset(file_name, normalize=True, include_slope=False, slope=0.01):
+    abnormal = pd.read_csv(file_name, header=None, index_col=None, skiprows=0, sep=",")
+    abnormal_data = abnormal.iloc[:, [1, 2]].values.astype(dtype="float32")
     abnormal_label = abnormal.iloc[:, 3].values
     # Normal = 0, Abnormal = 1 => # Normal = 1, Abnormal = -1
     abnormal_data = pd.DataFrame(data=abnormal_data, index=None, columns=None)
-    
+
     if include_slope:
         abnormal_data = abnormal_data.apply(lambda row: row + row.name * slope, axis=1)
 
@@ -460,18 +519,32 @@ def read_ECG_dataset(file_name, normalize=True, include_slope = False, slope = 0
 def read_GD_dataset(file_name, normalize=True):
     abnormal = pd.read_csv(file_name, header=0, index_col=0)
     abnormal_data = abnormal[
-        ['MotorData.ActCurrent', 'MotorData.ActPosition', 'MotorData.ActSpeed', 'MotorData.IsAcceleration',
-         'MotorData.IsForce', 'MotorData.Motor_Pos1reached', 'MotorData.Motor_Pos2reached',
-         'MotorData.Motor_Pos3reached',
-         'MotorData.Motor_Pos4reached', 'NVL_Recv_Ind.GL_Metall', 'NVL_Recv_Ind.GL_NonMetall',
-         'NVL_Recv_Storage.GL_I_ProcessStarted', 'NVL_Recv_Storage.GL_I_Slider_IN', 'NVL_Recv_Storage.GL_I_Slider_OUT',
-         'NVL_Recv_Storage.GL_LightBarrier', 'NVL_Send_Storage.ActivateStorage', 'PLC_PRG.Gripper',
-         'PLC_PRG.MaterialIsMetal']].values.astype(dtype='float32')
+        [
+            "MotorData.ActCurrent",
+            "MotorData.ActPosition",
+            "MotorData.ActSpeed",
+            "MotorData.IsAcceleration",
+            "MotorData.IsForce",
+            "MotorData.Motor_Pos1reached",
+            "MotorData.Motor_Pos2reached",
+            "MotorData.Motor_Pos3reached",
+            "MotorData.Motor_Pos4reached",
+            "NVL_Recv_Ind.GL_Metall",
+            "NVL_Recv_Ind.GL_NonMetall",
+            "NVL_Recv_Storage.GL_I_ProcessStarted",
+            "NVL_Recv_Storage.GL_I_Slider_IN",
+            "NVL_Recv_Storage.GL_I_Slider_OUT",
+            "NVL_Recv_Storage.GL_LightBarrier",
+            "NVL_Send_Storage.ActivateStorage",
+            "PLC_PRG.Gripper",
+            "PLC_PRG.MaterialIsMetal",
+        ]
+    ].values.astype(dtype="float32")
     if normalize:
         scaler = MinMaxScaler(feature_range=(0, 1))
         abnormal_data = scaler.fit_transform(abnormal_data)
 
-    abnormal_label = abnormal['Label'].values
+    abnormal_label = abnormal["Label"].values
     # Normal = 0, Abnormal = 2 => # Normal = 1, Abnormal = -1
 
     abnormal_label = np.expand_dims(abnormal_label, axis=1)
@@ -484,14 +557,32 @@ def read_GD_dataset(file_name, normalize=True):
 def read_HSS_dataset(file_name, normalize=True):
     abnormal = pd.read_csv(file_name, header=0, index_col=0)
     abnormal_data = abnormal[
-        ['I_w_BLO_Weg', 'O_w_BLO_power', 'O_w_BLO_voltage', 'I_w_BHL_Weg', 'O_w_BHL_power', 'O_w_BHL_voltage',
-         'I_w_BHR_Weg', 'O_w_BHR_power', 'O_w_BHR_voltage', 'I_w_BRU_Weg', 'O_w_BRU_power', 'O_w_BRU_voltage',
-         'I_w_HR_Weg', 'O_w_HR_power', 'O_w_HR_voltage', 'I_w_HL_Weg', 'O_w_HL_power', 'O_w_HL_voltage']].values.astype(dtype='float32')
+        [
+            "I_w_BLO_Weg",
+            "O_w_BLO_power",
+            "O_w_BLO_voltage",
+            "I_w_BHL_Weg",
+            "O_w_BHL_power",
+            "O_w_BHL_voltage",
+            "I_w_BHR_Weg",
+            "O_w_BHR_power",
+            "O_w_BHR_voltage",
+            "I_w_BRU_Weg",
+            "O_w_BRU_power",
+            "O_w_BRU_voltage",
+            "I_w_HR_Weg",
+            "O_w_HR_power",
+            "O_w_HR_voltage",
+            "I_w_HL_Weg",
+            "O_w_HL_power",
+            "O_w_HL_voltage",
+        ]
+    ].values.astype(dtype="float32")
     if normalize:
         scaler = MinMaxScaler(feature_range=(0, 1))
         abnormal_data = scaler.fit_transform(abnormal_data)
 
-    abnormal_label = abnormal['Labels'].values
+    abnormal_label = abnormal["Labels"].values
     # Normal = 0, Abnormal = 1 => # Normal = 1, Abnormal = -1
 
     abnormal_label = np.expand_dims(abnormal_label, axis=1)
@@ -501,20 +592,24 @@ def read_HSS_dataset(file_name, normalize=True):
     return abnormal_data, abnormal_label
 
 
-def read_SMD_dataset(file_name, normalize=True, include_slope = False, slope = 0.01):
+def read_SMD_dataset(file_name, normalize=True, include_slope=False, slope=0.01):
     file_name_wo_path = Path(file_name).name
     parent_path = Path(file_name).parent.parent
-    train_data = pd.read_csv(str(parent_path) + '/train/' + file_name_wo_path, header=None, index_col=None)
-    test_data = pd.read_csv(str(parent_path) + '/test/' + file_name_wo_path, header=None, index_col=None)
-    
-    train_data = pd.DataFrame(data=train_data, index=None, columns=None)
-    test_data = pd.DataFrame(data=test_data, index=None, columns=None)
-    
+    train_data = pd.read_csv(
+        str(parent_path) + "/train/" + file_name_wo_path, index_col=0
+    )
+    test_data = pd.read_csv(
+        str(parent_path) + "/test/" + file_name_wo_path, index_col=0
+    )
+
+    train_data = pd.DataFrame(data=train_data.iloc[:, :1], index=None, columns=None)
+    test_label = test_data.iloc[:, 1]
+    test_data = pd.DataFrame(data=test_data.iloc[:, :1], index=None, columns=None)
+
     if include_slope:
         train_data = train_data.apply(lambda row: row + row.name * slope, axis=1)
         test_data = test_data.apply(lambda row: row + row.name * slope, axis=1)
-    
-    test_label = pd.read_csv(str(parent_path) + '/test_label/' + file_name_wo_path, header=None, index_col=None)
+
     if normalize:
         scaler = MinMaxScaler(feature_range=(0, 1))
         scaler.fit(train_data)
@@ -522,77 +617,110 @@ def read_SMD_dataset(file_name, normalize=True, include_slope = False, slope = 0
         test_data = scaler.transform(test_data)
     test_label[test_label != 0] = -1
     test_label[test_label == 0] = 1
-    return train_data.astype(dtype='float32'), test_data.astype(dtype='float32'), test_label.to_numpy()
+    return (
+        train_data.astype(dtype="float32"),
+        test_data.astype(dtype="float32"),
+        test_label.to_numpy(),
+    )
 
 
-def read_WADI_dataset(file_name, normalize=True, sampling=0.1, include_slope = False, slope = 0.01):
+def read_WADI_dataset(
+    file_name, normalize=True, sampling=0.1, include_slope=False, slope=0.01
+):
     file_name_wo_path = Path(file_name).name
     parent_path = Path(file_name).parent.parent
-    train_raw = pd.read_csv(str(parent_path) + '/train/' + file_name_wo_path, header=0, index_col=None).fillna(0)
-    test_raw = pd.read_csv(str(parent_path) + '/test/' + file_name_wo_path, header=0, index_col=None).fillna(0)
-    
-    train_data = train_raw.iloc[::int(sampling*100)][train_raw.columns[3:]]
-    test_data = test_raw.iloc[::int(sampling*100)][test_raw.columns[3:-1]]
-    test_label = test_raw.iloc[::int(sampling*100)][test_raw.columns[-1]]
-    
+    train_raw = pd.read_csv(
+        str(parent_path) + "/train/" + file_name_wo_path, header=0, index_col=None
+    ).fillna(0)
+    test_raw = pd.read_csv(
+        str(parent_path) + "/test/" + file_name_wo_path, header=0, index_col=None
+    ).fillna(0)
+
+    train_data = train_raw.iloc[:: int(sampling * 100)][train_raw.columns[3:]]
+    test_data = test_raw.iloc[:: int(sampling * 100)][test_raw.columns[3:-1]]
+    test_label = test_raw.iloc[:: int(sampling * 100)][test_raw.columns[-1]]
+
     train_data = pd.DataFrame(data=train_data, index=None, columns=None)
     test_data = pd.DataFrame(data=test_data, index=None, columns=None)
-    
+
     if include_slope:
         train_data = train_data.apply(lambda row: row + row.name * slope, axis=1)
         test_data = test_data.apply(lambda row: row + row.name * slope, axis=1)
-    
+
     if normalize:
         scaler = MinMaxScaler(feature_range=(0, 1))
         scaler.fit(train_data)
         train_data = scaler.transform(train_data)
         test_data = scaler.transform(test_data)
 
-    return train_data.astype(dtype='float32'), test_data.astype(dtype='float32'), test_label.to_numpy()
+    return (
+        train_data.astype(dtype="float32"),
+        test_data.astype(dtype="float32"),
+        test_label.to_numpy(),
+    )
 
 
-def read_SWAT_dataset(file_name, normalize=True, sampling=0.1, include_slope = False, slope = 0.01):
+def read_SWAT_dataset(
+    file_name, normalize=True, sampling=0.1, include_slope=False, slope=0.01
+):
     file_name_wo_path = Path(file_name).name
     parent_path = Path(file_name).parent.parent
-    train_raw = pd.read_csv(str(parent_path) + '/train/' + file_name_wo_path, header=0, index_col=None).fillna(0)
-    test_raw = pd.read_csv(str(parent_path) + '/test/' + file_name_wo_path, header=0, index_col=None).fillna(0)
-    
-    train_data = train_raw.iloc[::int(sampling*100)][train_raw.columns[1:]]
-    test_data = test_raw.iloc[::int(sampling*100)][test_raw.columns[1:-1]]
-    test_label = test_raw.iloc[::int(sampling*100)][test_raw.columns[-1]]
-    
+    train_raw = pd.read_csv(
+        str(parent_path) + "/train/" + file_name_wo_path, header=0, index_col=None
+    ).fillna(0)
+    test_raw = pd.read_csv(
+        str(parent_path) + "/test/" + file_name_wo_path, header=0, index_col=None
+    ).fillna(0)
+
+    train_data = train_raw.iloc[:: int(sampling * 100)][train_raw.columns[1:]]
+    test_data = test_raw.iloc[:: int(sampling * 100)][test_raw.columns[1:-1]]
+    test_label = test_raw.iloc[:: int(sampling * 100)][test_raw.columns[-1]]
+
     train_data = pd.DataFrame(data=train_data, index=None, columns=None)
     test_data = pd.DataFrame(data=test_data, index=None, columns=None)
-    
+
     if include_slope:
         train_data = train_data.apply(lambda row: row + row.name * slope, axis=1)
         test_data = test_data.apply(lambda row: row + row.name * slope, axis=1)
-    
+
     if normalize:
         scaler = MinMaxScaler(feature_range=(0, 1))
         scaler.fit(train_data)
         train_data = scaler.transform(train_data)
         test_data = scaler.transform(test_data)
 
-    return train_data.astype(dtype='float32'), test_data.astype(dtype='float32'), test_label.to_numpy()
+    return (
+        train_data.astype(dtype="float32"),
+        test_data.astype(dtype="float32"),
+        test_label.to_numpy(),
+    )
 
-def read_SMAP_dataset(file_name, normalize=True, include_slope = False, slope = 0.01):
+
+def read_SMAP_dataset(file_name, normalize=True, include_slope=False, slope=0.01):
     file_name_wo_path = Path(file_name).name
     file_name_wo_path_extension = Path(file_name).stem
     parent_path = Path(file_name).parent.parent
-    train_data = np.load(str(parent_path) + '/train/' + file_name_wo_path)
-    test_data = np.load(str(parent_path) + '/test/' + file_name_wo_path)
-    
+    train_data = np.load(str(parent_path) + "/train/" + file_name_wo_path)
+    test_data = np.load(str(parent_path) + "/test/" + file_name_wo_path)
+
     train_data = pd.DataFrame(data=train_data, index=None, columns=None)
     test_data = pd.DataFrame(data=test_data, index=None, columns=None)
-    
+
     if include_slope:
         train_data = train_data.apply(lambda row: row + row.name * slope, axis=1)
         test_data = test_data.apply(lambda row: row + row.name * slope, axis=1)
-    
-    test_label = pd.read_csv(str(parent_path.parent) + '/labeled_anomalies.csv', header=0, index_col=None)
-    num_values = test_label.loc[test_label['chan_id'] == file_name_wo_path_extension]['num_values'].item()
-    idx_anomalies = ast.literal_eval(test_label.loc[test_label['chan_id'] == file_name_wo_path_extension]['anomaly_sequences'].to_numpy()[0])
+
+    test_label = pd.read_csv(
+        str(parent_path.parent) + "/labeled_anomalies.csv", header=0, index_col=None
+    )
+    num_values = test_label.loc[test_label["chan_id"] == file_name_wo_path_extension][
+        "num_values"
+    ].item()
+    idx_anomalies = ast.literal_eval(
+        test_label.loc[test_label["chan_id"] == file_name_wo_path_extension][
+            "anomaly_sequences"
+        ].to_numpy()[0]
+    )
     labels = []
     j = 0
     for i in range(num_values):
@@ -610,26 +738,38 @@ def read_SMAP_dataset(file_name, normalize=True, include_slope = False, slope = 
         train_data = scaler.transform(train_data)
         test_data = scaler.transform(test_data)
     assert test_data.shape[0] == labels.shape[0]
-    return train_data.astype(dtype='float32'), test_data.astype(dtype='float32'), np.expand_dims(labels, axis=1)
+    return (
+        train_data.astype(dtype="float32"),
+        test_data.astype(dtype="float32"),
+        np.expand_dims(labels, axis=1),
+    )
 
 
-def read_MSL_dataset(file_name, normalize=True, include_slope = False, slope = 0.01):
+def read_MSL_dataset(file_name, normalize=True, include_slope=False, slope=0.01):
     file_name_wo_path = Path(file_name).name
     file_name_wo_path_extension = Path(file_name).stem
     parent_path = Path(file_name).parent.parent
-    train_data = np.load(str(parent_path) + '/train/' + file_name_wo_path)
-    test_data = np.load(str(parent_path) + '/test/' + file_name_wo_path)
-    
+    train_data = np.load(str(parent_path) + "/train/" + file_name_wo_path)
+    test_data = np.load(str(parent_path) + "/test/" + file_name_wo_path)
+
     train_data = pd.DataFrame(data=train_data, index=None, columns=None)
     test_data = pd.DataFrame(data=test_data, index=None, columns=None)
-    
+
     if include_slope:
         train_data = train_data.apply(lambda row: row + row.name * slope, axis=1)
         test_data = test_data.apply(lambda row: row + row.name * slope, axis=1)
-    
-    test_label = pd.read_csv(str(parent_path.parent) + '/labeled_anomalies.csv', header=0, index_col=None)
-    num_values = test_label.loc[test_label['chan_id'] == file_name_wo_path_extension]['num_values'].item()
-    idx_anomalies = ast.literal_eval(test_label.loc[test_label['chan_id'] == file_name_wo_path_extension]['anomaly_sequences'].to_numpy()[0])
+
+    test_label = pd.read_csv(
+        str(parent_path.parent) + "/labeled_anomalies.csv", header=0, index_col=None
+    )
+    num_values = test_label.loc[test_label["chan_id"] == file_name_wo_path_extension][
+        "num_values"
+    ].item()
+    idx_anomalies = ast.literal_eval(
+        test_label.loc[test_label["chan_id"] == file_name_wo_path_extension][
+            "anomaly_sequences"
+        ].to_numpy()[0]
+    )
     labels = []
     j = 0
     for i in range(num_values):
@@ -646,17 +786,21 @@ def read_MSL_dataset(file_name, normalize=True, include_slope = False, slope = 0
         scaler.fit(train_data)
         train_data = scaler.transform(train_data)
         test_data = scaler.transform(test_data)
-    return train_data.astype(dtype='float32'), test_data.astype(dtype='float32'), np.expand_dims(labels, axis=1)
+    return (
+        train_data.astype(dtype="float32"),
+        test_data.astype(dtype="float32"),
+        np.expand_dims(labels, axis=1),
+    )
 
 
-def read_huawei_dataset(file_name, normalize=False, include_slope = False, slope = 0.01):
+def read_huawei_dataset(file_name, normalize=False, include_slope=False, slope=0.01):
     abnormal = pd.read_csv(file_name, header=0, index_col=None)
-    abnormal_data = abnormal.iloc[:, 1:].values.astype(dtype='float32')
+    abnormal_data = abnormal.iloc[:, 1:].values.astype(dtype="float32")
     abnormal_data = pd.DataFrame(data=abnormal_data, index=None, columns=None)
-    
-    abnormal_label = abnormal.iloc[:, 1].values.astype(dtype='float32')
+
+    abnormal_label = abnormal.iloc[:, 1].values.astype(dtype="float32")
     abnormal_label = pd.DataFrame(data=abnormal_label, index=None, columns=None)
-    
+
     if include_slope:
         abnormal_data = abnormal_data.apply(lambda row: row + row.name * slope, axis=1)
 
@@ -665,57 +809,59 @@ def read_huawei_dataset(file_name, normalize=False, include_slope = False, slope
         abnormal_data = scaler.fit_transform(abnormal_data)
     else:
         abnormal_data = abnormal_data.to_numpy()
-        
+
     abnormal_label[abnormal_label < 100] = -1
 
-    return abnormal_data.astype(dtype='float32'), abnormal_label.to_numpy()
+    return abnormal_data.astype(dtype="float32"), abnormal_label.to_numpy()
+
 
 def create_low_corr_tuples_h(input, k):
-    '''
+    """
     :param x: time series [number of window, widow size, number of channel]
     :return: x and y
-    '''
+    """
     x = []
     y = []
-    assert k % 2 == 0, 'k should be even number'
+    assert k % 2 == 0, "k should be even number"
     sample_wise = np.array_split(input, k, axis=0)
     for i in range(k):
         if i < k // 2:
             x.append(sample_wise[i])
-            y.append(sample_wise[i + k//2])
+            y.append(sample_wise[i + k // 2])
         else:
             x.append(sample_wise[i])
-            y.append(sample_wise[i - k//2])
+            y.append(sample_wise[i - k // 2])
     return np.concatenate(x, axis=0), np.concatenate(y, axis=0)
 
 
 def realign_low_corr_tuples_h(input, k):
-    '''
-        :param x: time series [number of window, widow size, number of channel]
-        :return: x and reconstruct_x align
-        '''
+    """
+    :param x: time series [number of window, widow size, number of channel]
+    :return: x and reconstruct_x align
+    """
     x = []
     reconstruct_x = []
-    assert k % 2 == 0, 'k should be even number'
+    assert k % 2 == 0, "k should be even number"
     sample_wise = np.array_split(input, k, axis=0)
     for i in range(k):
         if i < k // 2:
             x.append(sample_wise[i])
-            reconstruct_x.append(sample_wise[i + k//2])
+            reconstruct_x.append(sample_wise[i + k // 2])
         else:
             x.append(sample_wise[i])
-            reconstruct_x.append(sample_wise[i - k//2])
+            reconstruct_x.append(sample_wise[i - k // 2])
     return np.concatenate(x, axis=0), np.concatenate(reconstruct_x, axis=0)
 
 
 def create_low_corr_tuples_v(input):
-    '''
+    """
     :param x: time series [number of window, number of channel]
     :return: x and y
-    '''
-    assert input.shape[1] != 1, 'channel should be > 1'
+    """
+    assert input.shape[1] != 1, "channel should be > 1"
     x = []
     y = []
     corr_matrix = np.corrcoef(input)
     channel_wise = np.split(input, axis=0)
+    return 0
     return 0

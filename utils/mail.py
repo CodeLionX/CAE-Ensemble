@@ -1,9 +1,5 @@
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
-from email import encoders
-import logging
-from io import StringIO
 import smtplib
 import socket
 
