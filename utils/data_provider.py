@@ -460,6 +460,21 @@ def read_UAH_dataset(file_folder, normalize=True):
     return abnormal_data, abnormal_label_data
 
 
+def read_autotsad_dataset(file_name, normalize=True):
+    path = Path(file_name)
+    test_frame = pd.read_csv(path, index_col=0)
+    test_data = test_frame.iloc[:, :1].values.astype(dtype="float32")
+    test_label = test_frame.iloc[:, 1].values
+
+    if normalize:
+        scaler = MinMaxScaler(feature_range=(0, 1))
+        test_data = scaler.fit_transform(test_data)
+
+    test_label[test_label == 1] = -1
+    test_label[test_label == 0] = 1
+    return test_data, test_label
+
+
 def read_2D_dataset(file_name, normalize=True):
     file_name_wo_path = Path(file_name).name
     parent_path = Path(file_name).parent.parent
