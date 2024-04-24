@@ -1,0 +1,9 @@
+.venv-cae-ensemble
+**/__pycache__
+**/*.pyc
+data
+logs
+save_configs
+save_figures
+save_outputs
+tmp
