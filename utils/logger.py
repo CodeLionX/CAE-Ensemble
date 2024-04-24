@@ -14,11 +14,11 @@ def setup_logger(name, log_file, level=logging.INFO):
     logger = logging.getLogger(name)
     logger.setLevel(level)
     formatter = logging.Formatter(log_format)
-    fh = logging.FileHandler(log_file, mode='w')
-    fh.setFormatter(formatter)
+    # fh = logging.FileHandler(log_file, mode="w")
+    # fh.setFormatter(formatter)
     sh = logging.StreamHandler()
     sh.setFormatter(formatter)
-    logger.addHandler(fh)
+    # logger.addHandler(fh)
     logger.addHandler(sh)
     return logger
 
